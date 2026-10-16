@@ -158,7 +158,12 @@
   <!-- ================================================================= -->
   <!-- Run all tests                                                     -->
   <!-- ================================================================= -->  
-  <target name="runAll" depends="regression, longUnit"/>
+  <target name="runAll" depends="regression, longUnit, Backpatch"/>
+
+  <!-- ================================================================= -->
+  <!-- Security backpatch tests                                          -->
+  <!-- ================================================================= -->
+  <target name="Backpatch" depends="SocketNodeAllowList"/>
 
   <!-- ================================================================= -->
   <!-- Tests multiple parts of log4j. These tests are much more fragile  -->
@@ -482,6 +487,15 @@
         <classpath refid="tests.classpath"/>
         <formatter type="plain" usefile="false"/>
         <test name="org.apache.log4j.rewrite.RewriteAppenderTest" />
+      </junit>
+  </target>
+
+  <target name="SocketNodeAllowList" depends="build">
+      <junit printsummary="yes" fork="yes" 
+        haltonfailure="${haltonfailure}" dir="${basedir}">
+        <classpath refid="tests.classpath"/>
+        <formatter type="plain" usefile="false"/>
+        <test name="org.apache.log4j.net.SocketNodeAllowListTest" />
       </junit>
   </target>
 
