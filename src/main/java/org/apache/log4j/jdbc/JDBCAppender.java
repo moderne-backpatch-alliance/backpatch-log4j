@@ -18,12 +18,14 @@ package org.apache.log4j.jdbc;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.helpers.LogLog;
 import org.apache.log4j.spi.ErrorCode;
 import org.apache.log4j.spi.LoggingEvent;
 
@@ -78,6 +80,9 @@ import org.apache.log4j.spi.LoggingEvent;
 public class JDBCAppender extends org.apache.log4j.AppenderSkeleton
     implements org.apache.log4j.Appender {
 
+  private static final IllegalArgumentException ILLEGAL_PATTERN_FOR_SECURE_EXEC = new IllegalArgumentException(
+      "Only org.apache.log4j.PatternLayout is supported for now due to CVE-2022-23305");
+
   /**
    * URL of the DB for default connection handling
    */
@@ -113,6 +118,8 @@ public class JDBCAppender extends org.apache.log4j.AppenderSkeleton
    */
   protected String sqlStatement = "";
 
+  private JdbcPatternParser preparedStatementParser;
+
   /**
    * size of LoggingEvent buffer before writting to the database.
    * Default is 1.
@@ -131,10 +138,25 @@ public class JDBCAppender extends org.apache.log4j.AppenderSkeleton
   
   private boolean locationInfo = false;
 
+  private boolean isActive = false;
+
   public JDBCAppender() {
     super();
     buffer = new ArrayList(bufferSize);
     removes = new ArrayList(bufferSize);
+  }
+
+  public void activateOptions() {
+
+    if (getSql() == null || getSql().trim().length() == 0) {
+      LogLog.error("JDBCAppender.sql parameter is mandatory. Skipping all futher processing");
+      isActive = false;
+      return;
+    }
+
+    LogLog.debug("JDBCAppender constructing internal pattern parser");
+    preparedStatementParser = new JdbcPatternParser(getSql());
+    isActive = true;
   }
 
   /**
@@ -171,6 +193,9 @@ public class JDBCAppender extends org.apache.log4j.AppenderSkeleton
    * Adds the event to the buffer.  When full the buffer is flushed.
    */
   public void append(LoggingEvent event) {
+    if (!isActive) {
+      return;
+    }
     event.getNDC();
     event.getThreadName();
     // Get a copy of this thread's MDC.
@@ -187,15 +212,14 @@ public class JDBCAppender extends org.apache.log4j.AppenderSkeleton
   }
 
   /**
-   * By default getLogStatement sends the event to the required Layout object.
-   * The layout will format the given pattern into a workable SQL string.
+   * <p>
+   * <b>As of 1.2.18.1 {@link #getLogStatement} is no longer in use.</b>
+   * </p>
    *
-   * Overriding this provides direct access to the LoggingEvent
-   * when constructing the logging statement.
-   *
+   * @param event
    */
   protected String getLogStatement(LoggingEvent event) {
-    return getLayout().format(event);
+    return "";
   }
 
   /**
@@ -280,27 +304,63 @@ public class JDBCAppender extends org.apache.log4j.AppenderSkeleton
    * If a statement fails the LoggingEvent stays in the buffer!
    */
   public void flushBuffer() {
-    //Do the actual logging
-    removes.ensureCapacity(buffer.size());
-    for (Iterator i = buffer.iterator(); i.hasNext();) {
-      LoggingEvent logEvent = (LoggingEvent)i.next();
-      try {
-	    String sql = getLogStatement(logEvent);
-	    execute(sql);
-      }
-      catch (SQLException e) {
-	    errorHandler.error("Failed to excute sql", e,
-			   ErrorCode.FLUSH_FAILURE);
-      } finally {
-        removes.add(logEvent);
+    if (buffer.isEmpty()) {
+      return;
+    }
+    flushBufferSecure();
+  }
+
+  private void flushBufferSecure() {
+    // Prepare events that we will store to the DB
+    ArrayList removes = new ArrayList(buffer);
+    buffer.removeAll(removes);
+
+    if (layout.getClass() != PatternLayout.class) {
+      errorHandler.error("Failed to convert pattern " + layout + " to SQL", ILLEGAL_PATTERN_FOR_SECURE_EXEC,
+          ErrorCode.MISSING_LAYOUT);
+      return;
+    }
+    Connection con = null;
+    boolean useBatch = removes.size() > 1;
+    try {
+      con = getConnection();
+      PreparedStatement ps = con.prepareStatement(preparedStatementParser.getParameterizedSql());
+      safelyInsertIntoDB(removes, useBatch, ps);
+    } catch (SQLException e) {
+      errorHandler.error("Failed to append messages sql", e, ErrorCode.FLUSH_FAILURE);
+    } finally {
+      if (con != null) {
+        closeConnection(con);
       }
     }
-    
-    // remove from the buffer any events that were reported
-    buffer.removeAll(removes);
-    
-    // clear the buffer of reported events
-    removes.clear();
+
+  }
+
+  private void safelyInsertIntoDB(ArrayList removes, boolean useBatch, PreparedStatement ps)
+      throws SQLException {
+    try {
+      for (Iterator i = removes.iterator(); i.hasNext();) {
+        LoggingEvent logEvent = (LoggingEvent) i.next();
+        try {
+          preparedStatementParser.setParameters(ps, logEvent);
+          if (useBatch) {
+            ps.addBatch();
+          }
+        } catch (SQLException e) {
+          errorHandler.error("Failed to append parameters", e, ErrorCode.FLUSH_FAILURE);
+        }
+      }
+      if (useBatch) {
+        ps.executeBatch();
+      } else {
+        ps.execute();
+      }
+    } finally {
+      try {
+        ps.close();
+      } catch (SQLException ignored) {
+      }
+    }
   }
 
 
