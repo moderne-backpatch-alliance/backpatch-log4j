@@ -163,7 +163,7 @@
   <!-- ================================================================= -->
   <!-- Security backpatch tests                                          -->
   <!-- ================================================================= -->
-  <target name="Backpatch" depends="SocketNodeAllowList"/>
+  <target name="Backpatch" depends="SocketNodeAllowList, ChainsawAllowList"/>
 
   <!-- ================================================================= -->
   <!-- Tests multiple parts of log4j. These tests are much more fragile  -->
@@ -496,6 +496,15 @@
         <classpath refid="tests.classpath"/>
         <formatter type="plain" usefile="false"/>
         <test name="org.apache.log4j.net.SocketNodeAllowListTest" />
+      </junit>
+  </target>
+
+  <target name="ChainsawAllowList" depends="build">
+      <junit printsummary="yes" fork="yes" 
+        haltonfailure="${haltonfailure}" dir="${basedir}">
+        <classpath refid="tests.classpath"/>
+        <formatter type="plain" usefile="false"/>
+        <test name="org.apache.log4j.chainsaw.LoggingReceiverAllowListTest" />
       </junit>
   </target>
 
