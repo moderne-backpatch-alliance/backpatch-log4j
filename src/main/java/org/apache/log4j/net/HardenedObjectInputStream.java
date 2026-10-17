@@ -16,9 +16,11 @@
  */
 package org.apache.log4j.net;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InvalidClassException;
+import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamClass;
 import java.util.ArrayList;
@@ -35,6 +37,10 @@ import java.util.List;
  * always authorized.
  * </p>
  * 
+ * <p>
+ * Objects nested more than 16 levels deep are refused.
+ * </p>
+ * 
  * @author Ceki G&uuml;lc&uuml;
  * @since 1.2.18
  * 
@@ -46,8 +52,10 @@ public class HardenedObjectInputStream extends ObjectInputStream {
 	final List whitelistedClassNames;
 	final static String[] JAVA_PACKAGES = new String[] { "java.lang", "java.util", ARRAY_CLASS_PREFIX + "java.lang" };
 
+	static final int DEPTH_LIMIT = 16;
+
 	public HardenedObjectInputStream(InputStream in, String[] whilelist) throws IOException {
-		super(in);
+		super(new DepthLimitedInputStream(in));
 
 		this.whitelistedClassNames = new ArrayList();
 		if (whilelist != null) {
@@ -58,7 +66,7 @@ public class HardenedObjectInputStream extends ObjectInputStream {
 	}
 
 	public HardenedObjectInputStream(InputStream in, List whitelist) throws IOException {
-		super(in);
+		super(new DepthLimitedInputStream(in));
 
 		this.whitelistedClassNames = new ArrayList();
 		this.whitelistedClassNames.addAll(whitelist);
@@ -90,5 +98,41 @@ public class HardenedObjectInputStream extends ObjectInputStream {
 
 	protected void addToWhitelist(List additionalAuthorizedClasses) {
 		whitelistedClassNames.addAll(additionalAuthorizedClasses);
+	}
+
+	// readObject() is final and ObjectInputFilter needs Java 8u121, so depth is counted as ObjectInputStream.readObject0
+	// frames. Every type code arrives through read(), and each nesting level takes at least two of them (object and
+	// class descriptor), so after measuring depth d the limit cannot be passed before 2 * (DEPTH_LIMIT - d) more reads.
+	static final class DepthLimitedInputStream extends FilterInputStream {
+
+		private int readsBeforeCheck;
+
+		DepthLimitedInputStream(InputStream in) {
+			super(in);
+		}
+
+		public int read() throws IOException {
+			if (readsBeforeCheck-- <= 0) {
+				int depth = currentDepth();
+				if (depth > DEPTH_LIMIT) {
+					throw new InvalidObjectException("Unauthorized deserialization attempt: objects nested deeper than "
+							+ DEPTH_LIMIT);
+				}
+				readsBeforeCheck = 2 * (DEPTH_LIMIT - depth);
+			}
+			return in.read();
+		}
+
+		private static int currentDepth() {
+			StackTraceElement[] frames = new Throwable().getStackTrace();
+			int depth = 0;
+			for (int i = 0; i < frames.length; i++) {
+				if ("readObject0".equals(frames[i].getMethodName())
+						&& "java.io.ObjectInputStream".equals(frames[i].getClassName())) {
+					depth++;
+				}
+			}
+			return depth;
+		}
 	}
 }
