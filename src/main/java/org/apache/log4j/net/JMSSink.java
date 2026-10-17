@@ -135,6 +135,15 @@ public class JMSSink implements javax.jms.MessageListener {
   }
 
 
+  // Unused here, kept so subclasses compiled against 1.2.17 still link.
+  protected static Object lookup(Context ctx, String name) throws NamingException {
+    try {
+      return JNDIUtil.lookupObject(ctx, name);
+    } catch(NameNotFoundException e) {
+      logger.error("Could not find name ["+name+"].");
+      throw e;
+    }
+  }
 
   static void usage(String msg) {
     System.err.println(msg);

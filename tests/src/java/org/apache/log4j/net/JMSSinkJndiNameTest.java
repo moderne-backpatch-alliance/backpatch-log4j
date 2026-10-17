@@ -27,6 +27,7 @@ import java.util.Hashtable;
 import javax.jms.Topic;
 import javax.jms.TopicConnectionFactory;
 import javax.naming.Context;
+import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
 
 import junit.framework.TestCase;
@@ -103,5 +104,19 @@ public class JMSSinkJndiNameTest extends TestCase {
   public void testTopicNameOutsideJavaNamespaceIsNotLookedUp() {
     new JMSSink(TCF, "jms/Topic", "user", "password");
     assertEquals(Collections.singletonList(TCF), context.getLookups());
+  }
+
+  public void testLookupFindsJavaName() throws NamingException {
+    assertNotNull(JMSSink.lookup(context, TOPIC));
+    assertEquals(Collections.singletonList(TOPIC), context.getLookups());
+  }
+
+  public void testLookupRefusesNameOutsideJavaNamespace() {
+    try {
+      JMSSink.lookup(context, "jms/Topic");
+      fail("JMSSink.lookup looked up a name outside java:");
+    } catch (NamingException expected) {
+    }
+    assertEquals(Collections.EMPTY_LIST, context.getLookups());
   }
 }
