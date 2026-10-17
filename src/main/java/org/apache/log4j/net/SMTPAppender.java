@@ -99,6 +99,8 @@ public class SMTPAppender extends AppenderSkeleton
   private String smtpProtocol;
   private int smtpPort = -1;
   private boolean smtpDebug = false;
+  private boolean checkServerIdentity = true;
+
   private int bufferSize = 512;
   private boolean locationInfo = false;
   private boolean sendOnClose = false;
@@ -206,6 +208,12 @@ public class SMTPAppender extends AppenderSkeleton
         props.put("mail.transport.protocol", smtpProtocol);
         prefix = "mail." + smtpProtocol;
     }
+
+    if (checkServerIdentity) {
+        // ssl.checkserveridentity has no effect when protocol is smtp and not smtps.
+        props.put(prefix + ".ssl.checkserveridentity", "true");
+    }
+
     if (smtpHost != null) {
       props.put(prefix + ".host", smtpHost);
     }
@@ -641,6 +649,26 @@ public class SMTPAppender extends AppenderSkeleton
    */
   public void setSMTPDebug(final boolean debug) {
     this.smtpDebug = debug;
+  }
+
+  /**
+   * Setting the checkServerIdentity option to false will disable server identity check.
+   * By default this option is enabled.
+   *
+   * @param checkServerIdentity
+   */
+  public void setCheckServerIdentity(boolean checkServerIdentity) {
+    this.checkServerIdentity = checkServerIdentity;
+  }
+
+  /**
+   * This option enables server identity check and if false will disable server
+   * identity check. By default this option is enabled.
+   *
+   * @return checkServerIdentity
+   */
+  public boolean getCheckServerIdentity() {
+    return this.checkServerIdentity;
   }
   
   /**
