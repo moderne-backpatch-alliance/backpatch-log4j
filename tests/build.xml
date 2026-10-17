@@ -166,7 +166,7 @@
   <!-- ================================================================= -->
   <!-- Security backpatch tests                                          -->
   <!-- ================================================================= -->
-  <target name="Backpatch" depends="SocketNodeAllowList, ChainsawAllowList, JdbcAppender, JMSAppenderJndiName"/>
+  <target name="Backpatch" depends="SocketNodeAllowList, ChainsawAllowList, JdbcAppender, JMSAppenderJndiName, JMSSinkJndiName"/>
 
   <!-- ================================================================= -->
   <!-- Tests multiple parts of log4j. These tests are much more fragile  -->
@@ -528,6 +528,15 @@
         <classpath refid="tests.classpath"/>
         <formatter type="plain" usefile="false"/>
         <test name="org.apache.log4j.net.JMSAppenderJndiNameTest" />
+      </junit>
+  </target>
+
+  <target name="JMSSinkJndiName" depends="build">
+      <junit printsummary="yes" fork="yes" 
+        haltonfailure="${haltonfailure}" dir="${basedir}">
+        <classpath refid="tests.classpath"/>
+        <formatter type="plain" usefile="false"/>
+        <test name="org.apache.log4j.net.JMSSinkJndiNameTest" />
       </junit>
   </target>
 
