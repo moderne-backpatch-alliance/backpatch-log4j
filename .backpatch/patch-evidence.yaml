@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 1.2.17.1-backpatch-00001
+release: 1.2.17.1-backpatch-00002
 baseline: v1.2.17+backpatch.baseline
 fixes:
   - cve: CVE-2019-17571
@@ -10,12 +10,20 @@ fixes:
     basis: adapted
     artifacts:
       - log4j:log4j
-    note: New in this release; adapted onto 1.2.17; fixed at 1.2.17.1-backpatch-00001 (backpatch-log4j@db17bbd).
+    note: Carried from 1.2.17.1-backpatch-00001.
+  - cve: CVE-2022-23307
+    upstream_fix_url: https://github.com/qos-ch/reload4j/commit/64902fe18ce5a5dd40487051a2f6231d9fbbe9b0
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2022-23307
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-log4j/commit/7577c15
+    basis: backport
+    artifacts:
+      - log4j:log4j
+    note: New in this release; ported onto 1.2.17; fixed at 1.2.17.1-backpatch-00002 (backpatch-log4j@7577c15).
 tests:
-  commit: db17bbd1176c9f7cd8d0789bb126b9205b843333
+  commit: 7577c158ad640e78f358a4a92e5076ea3c716af3
   command: JAVA_HOME=<jdk-7> /bin/bash <alliance>/work/wave2/items/scripts/log4j-1.2.17.sh suite <m2> 
   runtime: Azul Zulu (Java 1.7.0_352), Apache Ant 1.9.16, main classes compiled by Zulu 6u42 javac in a linux/amd64 container, macOS x86_64 under Rosetta 2
-  report: log4j-1.2.17.1-backpatch-00001-tests.zip
-  report_sha256: efaf07dfc1d398d8e188c073f3de56735dbbcb9006ee2be9c1780aefb5c662ca
+  report: log4j-1.2.17.1-backpatch-00002-tests.zip
+  report_sha256: 37bd393c0f680d218ff048bd0a4334ccebf9c1343b7407537a4188b3e9b65987
   result: pass
-  note: the full suite at the tested commit, 646 tests run, 0 failed, 0 skipped; the regression tests for CVE-2019-17571 are SocketNodeAllowListTest
+  note: the full suite at the tested commit, 648 tests run, 0 failed, 0 skipped; the regression tests for CVE-2022-23307 are LoggingReceiverAllowListTest
