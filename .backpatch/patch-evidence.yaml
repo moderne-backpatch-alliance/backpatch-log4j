@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 1.2.17.1-backpatch-00004
+release: 1.2.17.1-backpatch-00005
 baseline: v1.2.17+backpatch.baseline
 fixes:
   - cve: CVE-2019-17571
@@ -34,12 +34,20 @@ fixes:
     basis: adapted
     artifacts:
       - log4j:log4j
-    note: New in this release; adapted onto 1.2.17; fixed at 1.2.17.1-backpatch-00004 (backpatch-log4j@a925a80..060bfc8).
+    note: Carried from 1.2.17.1-backpatch-00004.
+  - cve: CVE-2023-26464
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2023-26464
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-log4j/commit/df57835
+    not_applicable_rationale: a provider-developed fix; no upstream-authored code to credit
+    basis: original
+    artifacts:
+      - log4j:log4j
+    note: New in this release; written for 1.2.17; fixed at 1.2.17.1-backpatch-00005 (backpatch-log4j@df57835).
 tests:
-  commit: 060bfc8de08baca00032b6b8f3849ac8b87c1aaf
+  commit: df57835024cb2f5aae363aee1661ba3b9f7266bd
   command: "JAVA_HOME=<jdk-7> /bin/bash <alliance>/work/wave2/items/scripts/log4j-1.2.17.sh suite <m2> "
   runtime: Azul Zulu (Java 1.7.0_352), Apache Ant 1.9.16, main classes compiled by Zulu 6u42 javac in a linux/amd64 container, macOS x86_64 under Rosetta 2
-  report: log4j-1.2.17.1-backpatch-00004-tests.zip
-  report_sha256: 52e0caaee9459ae089669f23e5955a2ca806373ae5b033e691c8f26f9188609a
+  report: log4j-1.2.17.1-backpatch-00005-tests.zip
+  report_sha256: d88f4873bbe3c65b7d64ca5df455a9ab9e9294411f4d3c423944b5ee74734244
   result: pass
-  note: "run at 6e6d7260e9fb, whose tree equals this commit's apart from .backpatch/patch-evidence.yaml; the full suite at the tested commit, 656 tests run, 1 failed, each failing at the baseline v1.2.17+backpatch.baseline too (the same suite there: 644 run, 1 failed), 0 skipped; the regression tests for CVE-2021-4104 are JMSAppenderJndiNameTest"
+  note: run at 85f5b96609c0, whose tree equals this commit's apart from .backpatch/patch-evidence.yaml; the full suite at the tested commit, 664 tests run, 0 failed, 0 skipped; the regression tests for CVE-2023-26464 are HardenedObjectInputStreamDepthTest
