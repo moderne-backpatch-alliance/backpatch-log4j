@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 1.2.17.1-backpatch-00003
+release: 1.2.17.1-backpatch-00004
 baseline: v1.2.17+backpatch.baseline
 fixes:
   - cve: CVE-2019-17571
@@ -26,12 +26,20 @@ fixes:
     basis: adapted
     artifacts:
       - log4j:log4j
-    note: New in this release; adapted onto 1.2.17; fixed at 1.2.17.1-backpatch-00003 (backpatch-log4j@cce90a2).
+    note: Carried from 1.2.17.1-backpatch-00003.
+  - cve: CVE-2021-4104
+    upstream_fix_url: https://github.com/qos-ch/reload4j/commit/fb7b1ff1c8beb8544933248d00a46e9e30547e87
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2021-4104
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-log4j/compare/a925a80~1...060bfc8
+    basis: adapted
+    artifacts:
+      - log4j:log4j
+    note: New in this release; adapted onto 1.2.17; fixed at 1.2.17.1-backpatch-00004 (backpatch-log4j@a925a80..060bfc8).
 tests:
-  commit: cce90a254628e60cfaae286ac094bf2f77a413d4
-  command: JAVA_HOME=<jdk-7> /bin/bash <alliance>/work/wave2/items/scripts/log4j-1.2.17.sh suite <m2> 
+  commit: 060bfc8de08baca00032b6b8f3849ac8b87c1aaf
+  command: "JAVA_HOME=<jdk-7> /bin/bash <alliance>/work/wave2/items/scripts/log4j-1.2.17.sh suite <m2> "
   runtime: Azul Zulu (Java 1.7.0_352), Apache Ant 1.9.16, main classes compiled by Zulu 6u42 javac in a linux/amd64 container, macOS x86_64 under Rosetta 2
-  report: log4j-1.2.17.1-backpatch-00003-tests.zip
-  report_sha256: 08ec4b9ded1643fa986ccf766c9310a55df4736c815343c2dd86a41f109c28d2
+  report: log4j-1.2.17.1-backpatch-00004-tests.zip
+  report_sha256: 52e0caaee9459ae089669f23e5955a2ca806373ae5b033e691c8f26f9188609a
   result: pass
-  note: the full suite at the tested commit, 654 tests run, 0 failed, 0 skipped; the regression tests for CVE-2022-23305 are JdbcAppenderTest, JdbcPatternParserTest
+  note: "run at 6e6d7260e9fb, whose tree equals this commit's apart from .backpatch/patch-evidence.yaml; the full suite at the tested commit, 656 tests run, 1 failed, each failing at the baseline v1.2.17+backpatch.baseline too (the same suite there: 644 run, 1 failed), 0 skipped; the regression tests for CVE-2021-4104 are JMSAppenderJndiNameTest"
