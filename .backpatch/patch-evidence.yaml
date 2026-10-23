@@ -62,8 +62,8 @@ fixes:
 tests:
   commit: ffadcad754380cd19453bc9bb4c0deadddc9ba6c
   command: "JAVA_HOME=<jdk-7> /bin/bash <alliance>/work/wave2/items/scripts/log4j-1.2.17.sh suite <m2> "
-  runtime: Azul Zulu (Java 1.7.0_352), Apache Ant 1.9.16, main classes compiled by Zulu 6u42 javac in a linux/amd64 container, macOS x86_64 under Rosetta 2
+  runtime: "Azul Zulu (Java 1.7.0_352), Apache Ant 1.9.16, main classes compiled by Zulu 6u42 javac in a linux/amd64 container, macOS x86_64 under Rosetta 2"
   report: log4j-1.2.17.1-backpatch-00007-tests.zip
-  report_sha256: 5163d96dd54479647f7fbe1492a21eaf8e8061836305b189e2b4c5997c9a125e
+  report_sha256: 74e83b60844a1436a3ac32fe3bde1db95c5e87fe0d89b62394fdafe1ed352a7e
   result: pass
-  note: "run at a3d7b87f0523, whose tree equals this commit's apart from .backpatch/patch-evidence.yaml; the full suite at the tested commit, 669 tests run, 1 failed, each failing at the baseline v1.2.17+backpatch.baseline too (the same suite there: 644 run, 1 failed), 0 skipped; the regression tests for CVE-2022-23302 are JMSSinkJndiNameTest"
+  note: "the full suite at the tested commit, 669 tests run, 0 failed, 0 skipped; JUnit 3 runs test methods in the JVM's reflection order, which differs between runs on Java 7; org.apache.log4j.varia.ErrorHandlerTestCase#test2 (passes only after test1 has written output/temp) depend on that order, failed at the baseline in some runs, and passed in this run; the regression tests for CVE-2022-23302 are JMSSinkJndiNameTest"
